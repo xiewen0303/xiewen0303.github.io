@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.3">Jekyll</generator><link href="http://0.0.0.0:5000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://0.0.0.0:5000/" rel="alternate" type="text/html" /><updated>2024-02-26T16:54:36+08:00</updated><id>http://0.0.0.0:5000/feed.xml</id><title type="html">Your awesome title</title><subtitle>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</subtitle><entry><title type="html">java基础命令</title><link href="http://0.0.0.0:5000/wind/update/2024/02/26/JVM%E5%9F%BA%E7%A1%80%E5%91%BD%E4%BB%A4%E4%BD%BF%E7%94%A8.html" rel="alternate" type="text/html" title="java基础命令" /><published>2024-02-26T16:14:00+08:00</published><updated>2024-02-26T16:14:00+08:00</updated><id>http://0.0.0.0:5000/wind/update/2024/02/26/JVM%E5%9F%BA%E7%A1%80%E5%91%BD%E4%BB%A4%E4%BD%BF%E7%94%A8</id><content type="html" xml:base="http://0.0.0.0:5000/wind/update/2024/02/26/JVM%E5%9F%BA%E7%A1%80%E5%91%BD%E4%BB%A4%E4%BD%BF%E7%94%A8.html"><![CDATA[<p>[TOC]</p>
+
+<p>注：本文章基于linux环境，jdk8的命令。</p>
+
+<h2 id="1jmap">1、jmap</h2>
+
+<p>1.1 查看帮助文档</p>
+
+<p><img src="/assets/image-20231218131804276.png" alt="image-20231218131804276" /></p>
+
+<p>1.2 示例</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1、查看java进程
+<span class="c">#jps </span>
+
+2、查看对象数、内存大小
+<span class="c">#jmap -histo 9251</span>
+
+3、堆的使用情况
+<span class="c">#jmap -heap 9251</span>
+
+4、堆内存dump导出
+<span class="c">#jmap -dump:format=b,file=1.dump 9251</span>
+
+5、可以借助 eclipse memory analyzer 等工具分析dump文件
+</code></pre></div></div>
+
+<h2 id="2jstatck">2、jstatck</h2>
+
+<h3 id="21-找到cpu使用率高的线程堆栈信息">2.1 找到cpu使用率高的线程堆栈信息</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1、找到进程号，如：9708
+#jsp 
+
+2、查看进程里面的所有线程信息（图一）
+#top -Hp 9708
+
+3、将线程id翻译成16进制（图二）
+#printf '%x' 9709
+
+4、查看线程堆栈信息中 4cd0 这个线程所在行的后面10行（图三）
+jstack 9708|grep -A 10 25ed
+</code></pre></div></div>
+
+<p>参考图如下：</p>
+
+<p>图一：</p>
+
+<p><img src="/assets/image-20231218141613914.png" alt="image-20231218141613914" /></p>
+
+<p>图二：</p>
+
+<p><img src="/assets/image-20231218141823071.png" alt="image-20231218141823071" /></p>
+
+<p>图三：</p>
+
+<p><img src="/assets/image-20231218142038873.png" alt="image-20231218142038873" /></p>
+
+<h3 id="22-找到死锁的线程信息">2.2 找到死锁的线程信息</h3>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>查看线程的信息，死锁一般在最后有显示
+<span class="c">#jstack 9953 </span>
+
+<span class="o">[</span>root@localhost ~]# jstack 9953
+2023-12-18 15:11:24
+Full thread dump Java HotSpot<span class="o">(</span>TM<span class="o">)</span> 64-Bit Server VM <span class="o">(</span>25.391-b13 mixed mode<span class="o">)</span>:
+
+<span class="s2">"Attach Listener"</span> <span class="c">#11 daemon prio=9 os_prio=0 tid=0x00007faa74001000 nid=0x2702 waiting on condition [0x0000000000000000]</span>
+   java.lang.Thread.State: RUNNABLE
+
+<span class="s2">"DestroyJavaVM"</span> <span class="c">#10 prio=5 os_prio=0 tid=0x00007faa9c009800 nid=0x26e2 waiting on condition [0x0000000000000000]</span>
+   java.lang.Thread.State: RUNNABLE
+
+<span class="s2">"thread-2"</span> <span class="c">#9 prio=5 os_prio=0 tid=0x00007faa9c0f8800 nid=0x26ec waiting for monitor entry [0x00007faaa0e6b000]</span>
+   java.lang.Thread.State: BLOCKED <span class="o">(</span>on object monitor<span class="o">)</span>
+	at com.tuning.AnalysisDeadLock.lambda<span class="nv">$execute$1</span><span class="o">(</span>AnalysisDeadLock.java:49<span class="o">)</span>
+	- waiting to lock &lt;0x00000000f0c5bf90&gt; <span class="o">(</span>a java.lang.Object<span class="o">)</span>
+	- locked &lt;0x00000000f0c5bfa0&gt; <span class="o">(</span>a java.lang.Object<span class="o">)</span>
+	at com.tuning.AnalysisDeadLock<span class="nv">$$</span>Lambda<span class="nv">$2</span>/1418481495.run<span class="o">(</span>Unknown Source<span class="o">)</span>
+	at java.lang.Thread.run<span class="o">(</span>Thread.java:750<span class="o">)</span>
+
+<span class="s2">"thread-1"</span> <span class="c">#8 prio=5 os_prio=0 tid=0x00007faa9c0f7000 nid=0x26eb waiting for monitor entry [0x00007faaa0f6c000]</span>
+   java.lang.Thread.State: BLOCKED <span class="o">(</span>on object monitor<span class="o">)</span>
+	at com.tuning.AnalysisDeadLock.lambda<span class="nv">$execute$0</span><span class="o">(</span>AnalysisDeadLock.java:33<span class="o">)</span>
+	- waiting to lock &lt;0x00000000f0c5bfa0&gt; <span class="o">(</span>a java.lang.Object<span class="o">)</span>
+	- locked &lt;0x00000000f0c5bf90&gt; <span class="o">(</span>a java.lang.Object<span class="o">)</span>
+	at com.tuning.AnalysisDeadLock<span class="nv">$$</span>Lambda<span class="nv">$1</span>/471910020.run<span class="o">(</span>Unknown Source<span class="o">)</span>
+	at java.lang.Thread.run<span class="o">(</span>Thread.java:750<span class="o">)</span>
+
+<span class="s2">"Service Thread"</span> <span class="c">#7 daemon prio=9 os_prio=0 tid=0x00007faa9c0b8800 nid=0x26e9 runnable [0x0000000000000000]</span>
+   java.lang.Thread.State: RUNNABLE
+
+<span class="s2">"C1 CompilerThread1"</span> <span class="c">#6 daemon prio=9 os_prio=0 tid=0x00007faa9c0b3800 nid=0x26e8 waiting on condition [0x0000000000000000]</span>
+   java.lang.Thread.State: RUNNABLE
+
+<span class="s2">"C2 CompilerThread0"</span> <span class="c">#5 daemon prio=9 os_prio=0 tid=0x00007faa9c0b1000 nid=0x26e7 waiting on condition [0x0000000000000000]</span>
+   java.lang.Thread.State: RUNNABLE
+
+<span class="s2">"Signal Dispatcher"</span> <span class="c">#4 daemon prio=9 os_prio=0 tid=0x00007faa9c0af800 nid=0x26e6 runnable [0x0000000000000000]</span>
+   java.lang.Thread.State: RUNNABLE
+
+<span class="s2">"Finalizer"</span> <span class="c">#3 daemon prio=8 os_prio=0 tid=0x00007faa9c07c800 nid=0x26e5 in Object.wait() [0x00007faaa1572000]</span>
+   java.lang.Thread.State: WAITING <span class="o">(</span>on object monitor<span class="o">)</span>
+	at java.lang.Object.wait<span class="o">(</span>Native Method<span class="o">)</span>
+	- waiting on &lt;0x00000000f0c08f08&gt; <span class="o">(</span>a java.lang.ref.ReferenceQueue<span class="nv">$Lock</span><span class="o">)</span>
+	at java.lang.ref.ReferenceQueue.remove<span class="o">(</span>ReferenceQueue.java:150<span class="o">)</span>
+	- locked &lt;0x00000000f0c08f08&gt; <span class="o">(</span>a java.lang.ref.ReferenceQueue<span class="nv">$Lock</span><span class="o">)</span>
+	at java.lang.ref.ReferenceQueue.remove<span class="o">(</span>ReferenceQueue.java:171<span class="o">)</span>
+	at java.lang.ref.Finalizer<span class="nv">$FinalizerThread</span>.run<span class="o">(</span>Finalizer.java:188<span class="o">)</span>
+
+<span class="s2">"Reference Handler"</span> <span class="c">#2 daemon prio=10 os_prio=0 tid=0x00007faa9c078000 nid=0x26e4 in Object.wait() [0x00007faaa1673000]</span>
+   java.lang.Thread.State: WAITING <span class="o">(</span>on object monitor<span class="o">)</span>
+	at java.lang.Object.wait<span class="o">(</span>Native Method<span class="o">)</span>
+	- waiting on &lt;0x00000000f0c06ba0&gt; <span class="o">(</span>a java.lang.ref.Reference<span class="nv">$Lock</span><span class="o">)</span>
+	at java.lang.Object.wait<span class="o">(</span>Object.java:502<span class="o">)</span>
+	at java.lang.ref.Reference.tryHandlePending<span class="o">(</span>Reference.java:191<span class="o">)</span>
+	- locked &lt;0x00000000f0c06ba0&gt; <span class="o">(</span>a java.lang.ref.Reference<span class="nv">$Lock</span><span class="o">)</span>
+	at java.lang.ref.Reference<span class="nv">$ReferenceHandler</span>.run<span class="o">(</span>Reference.java:153<span class="o">)</span>
+
+<span class="s2">"VM Thread"</span> <span class="nv">os_prio</span><span class="o">=</span>0 <span class="nv">tid</span><span class="o">=</span>0x00007faa9c06e000 <span class="nv">nid</span><span class="o">=</span>0x26e3 runnable 
+
+<span class="s2">"VM Periodic Task Thread"</span> <span class="nv">os_prio</span><span class="o">=</span>0 <span class="nv">tid</span><span class="o">=</span>0x00007faa9c0bb800 <span class="nv">nid</span><span class="o">=</span>0x26ea waiting on condition 
+
+JNI global references: 311
+
+
+Found one Java-level deadlock:
+<span class="o">=============================</span>
+<span class="s2">"thread-2"</span>:
+  waiting to lock monitor 0x00007faa800062c8 <span class="o">(</span>object 0x00000000f0c5bf90, a java.lang.Object<span class="o">)</span>,
+  which is held by <span class="s2">"thread-1"</span>
+<span class="s2">"thread-1"</span>:
+  waiting to lock monitor 0x00007faa80004e28 <span class="o">(</span>object 0x00000000f0c5bfa0, a java.lang.Object<span class="o">)</span>,
+  which is held by <span class="s2">"thread-2"</span>
+
+Java stack information <span class="k">for </span>the threads listed above:
+<span class="o">===================================================</span>
+<span class="s2">"thread-2"</span>:
+	at com.tuning.AnalysisDeadLock.lambda<span class="nv">$execute$1</span><span class="o">(</span>AnalysisDeadLock.java:49<span class="o">)</span>
+	- waiting to lock &lt;0x00000000f0c5bf90&gt; <span class="o">(</span>a java.lang.Object<span class="o">)</span>
+	- locked &lt;0x00000000f0c5bfa0&gt; <span class="o">(</span>a java.lang.Object<span class="o">)</span>
+	at com.tuning.AnalysisDeadLock<span class="nv">$$</span>Lambda<span class="nv">$2</span>/1418481495.run<span class="o">(</span>Unknown Source<span class="o">)</span>
+	at java.lang.Thread.run<span class="o">(</span>Thread.java:750<span class="o">)</span>
+<span class="s2">"thread-1"</span>:
+	at com.tuning.AnalysisDeadLock.lambda<span class="nv">$execute$0</span><span class="o">(</span>AnalysisDeadLock.java:33<span class="o">)</span>
+	- waiting to lock &lt;0x00000000f0c5bfa0&gt; <span class="o">(</span>a java.lang.Object<span class="o">)</span>
+	- locked &lt;0x00000000f0c5bf90&gt; <span class="o">(</span>a java.lang.Object<span class="o">)</span>
+	at com.tuning.AnalysisDeadLock<span class="nv">$$</span>Lambda<span class="nv">$1</span>/471910020.run<span class="o">(</span>Unknown Source<span class="o">)</span>
+	at java.lang.Thread.run<span class="o">(</span>Thread.java:750<span class="o">)</span>
+
+Found 1 deadlock.
+</code></pre></div></div>
+
+<h2 id="3jstat">3、jstat</h2>
+
+<h3 id="31-查看gc的执行信息">3.1 查看gc的执行信息</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#jstat -gc 10299 2000 10000
+10299 进程号
+2000 2秒钟执行一次
+10000 执行10000次
+
+S0C：第一个幸存区的大小，单位KB
+S1C：第二个幸存区的大小
+S0U：第一个幸存区的使用大小S1U：第二个幸存区的使用大小
+EC：伊甸园区的大小
+EU：伊甸园区的使用大小
+OC：老年代大小
+OU：老年代使用大小
+MC：方法区大小(元空间)
+MU：方法区使用大小
+CCSC:压缩类空间大小
+CCSU:压缩类空间使用大小
+YGC：年轻代垃圾回收次数
+YGCT：年轻代垃圾回收消耗时间，单位s
+FGC：老年代垃圾回收次数 
+FGCT：老年代垃圾回收消耗时间，单位s
+GCT：垃圾回收消耗总时间，单位s
+
+</code></pre></div></div>
+
+<p><img src="/assets/image-20231218165037982.png" alt="image-20231218165037982" /></p>
+
+<h3 id="32-堆内存统计">3.2 堆内存统计</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>jstat -gccapacity 10299
+
+NGCMN：新生代最小容量
+NGCMX：新生代最大容量
+NGC：当前新生代容量
+S0C：第一个幸存区大小
+S1C：第二个幸存区的大小
+EC：伊甸园区的大小
+OGCMN：老年代最小容量
+OGCMX：老年代最大容量
+OGC：当前老年代大小
+OC:当前老年代大小
+MCMN:最小元数据容量
+MCMX：最大元数据容量
+MC：当前元数据空间大小
+CCSMN：最小压缩类空间大小
+CCSMX：最大压缩类空间大小
+CCSC：当前压缩类空间大小
+YGC：年轻代gc次数
+FGC：老年代GC次数
+</code></pre></div></div>
+
+<p><img src="/assets/image-20231218165410902.png" alt="image-20231218165410902" /></p>
+
+<h3 id="33-新生代垃圾回收统计">3.3 新生代垃圾回收统计</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>jstat -gcnew 10299
+
+S0C：第一个幸存区的大小
+S1C：第二个幸存区的大小
+S0U：第一个幸存区的使用大小
+S1U：第二个幸存区的使用大小
+TT:对象在新生代存活的次数
+MTT:对象在新生代存活的最大次数
+DSS:期望的幸存区大小
+EC：伊甸园区的大小
+EU：伊甸园区的使用大小
+YGC：年轻代垃圾回收次数
+YGCT：年轻代垃圾回收消耗时间
+</code></pre></div></div>
+
+<h3 id="34-新生代内存统计">3.4 新生代内存统计</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>jstat -gcnewcapacity 10299
+
+NGCMN：新生代最小容量
+NGCMX：新生代最大容量
+NGC：当前新生代容量
+S0CMX：最大幸存1区大小
+S0C：当前幸存1区大小
+S1CMX：最大幸存2区大小
+S1C：当前幸存2区大小
+ECMX：最大伊甸园区大小
+EC：当前伊甸园区大小
+YGC：年轻代垃圾回收次数
+FGC：老年代回收次数
+</code></pre></div></div>
+
+<p><img src="/assets/image-20231218165811534.png" alt="image-20231218165811534" /></p>
+
+<h3 id="35-老年代垃圾回收统计">3.5 老年代垃圾回收统计</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>jstat -gcold 10299
+
+MC：方法区大小
+MU：方法区使用大小
+CCSC:压缩类空间大小
+CCSU:压缩类空间使用大小
+OC：老年代大小
+OU：老年代使用大小
+YGC：年轻代垃圾回收次数
+FGC：老年代垃圾回收次数
+FGCT：老年代垃圾回收消耗时间
+GCT：垃圾回收消耗总时间
+</code></pre></div></div>
+
+<h3 id="36-老年代内存统计">3.6 老年代内存统计</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>jstat -gcoldcapacity 10299
+
+OGCMN：老年代最小容量
+OGCMX：老年代最大容量
+OGC：当前老年代大小
+OC：老年代大小
+YGC：年轻代垃圾回收次数
+FGC：老年代垃圾回收次数
+FGCT：老年代垃圾回收消耗时间
+GCT：垃圾回收消耗总时间
+</code></pre></div></div>
+
+<h3 id="37-元数据空间统计">3.7 元数据空间统计</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>jstat -gcmetacapacity 10299
+
+MCMN:最小元数据容量
+MCMX：最大元数据容量
+MC：当前元数据空间大小 
+CCSMN：最小压缩类空间大小
+CCSMX：最大压缩类空间大小
+CCSC：当前压缩类空间大小
+YGC：年轻代垃圾回收次数
+FGC：老年代垃圾回收次数
+FGCT：老年代垃圾回收消耗时间
+GCT：垃圾回收消耗总时间
+</code></pre></div></div>
+
+<h3 id="38-gc公共数据统计">3.8 gc公共数据统计</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>jstat -gcutil 10299
+
+S0：幸存1区当前使用比例
+S1：幸存2区当前使用比例
+E：伊甸园区使用比例
+O：老年代使用比例
+M：元数据区使用比例
+CCS：压缩使用比例
+YGC：年轻代垃圾回收次数
+FGC：老年代垃圾回收次数
+FGCT：老年代垃圾回收消耗时间
+GCT：垃圾回收消耗总时间
+</code></pre></div></div>]]></content><author><name></name></author><category term="wind" /><category term="update" /><summary type="html"><![CDATA[[TOC] 注：本文章基于linux环境，jdk8的命令。 1、jmap 1.1 查看帮助文档 1.2 示例 1、查看java进程 #jps 2、查看对象数、内存大小 #jmap -histo 9251 3、堆的使用情况 #jmap -heap 9251 4、堆内存dump导出 #jmap -dump:format=b,file=1.dump 9251 5、可以借助 eclipse memory analyzer 等工具分析dump文件 2、jstatck 2.1 找到cpu使用率高的线程堆栈信息 1、找到进程号，如：9708 #jsp 2、查看进程里面的所有线程信息（图一） #top -Hp 9708 3、将线程id翻译成16进制（图二） #printf '%x' 9709 4、查看线程堆栈信息中 4cd0 这个线程所在行的后面10行（图三） jstack 9708|grep -A 10 25ed 参考图如下： 图一： 图二： 图三： 2.2 找到死锁的线程信息 查看线程的信息，死锁一般在最后有显示 #jstack 9953 [root@localhost ~]# jstack 9953 2023-12-18 15:11:24 Full thread dump Java HotSpot(TM) 64-Bit Server VM (25.391-b13 mixed mode): "Attach Listener" #11 daemon prio=9 os_prio=0 tid=0x00007faa74001000 nid=0x2702 waiting on condition [0x0000000000000000] java.lang.Thread.State: RUNNABLE "DestroyJavaVM" #10 prio=5 os_prio=0 tid=0x00007faa9c009800 nid=0x26e2 waiting on condition [0x0000000000000000] java.lang.Thread.State: RUNNABLE "thread-2" #9 prio=5 os_prio=0 tid=0x00007faa9c0f8800 nid=0x26ec waiting for monitor entry [0x00007faaa0e6b000] java.lang.Thread.State: BLOCKED (on object monitor) at com.tuning.AnalysisDeadLock.lambda$execute$1(AnalysisDeadLock.java:49) - waiting to lock &lt;0x00000000f0c5bf90&gt; (a java.lang.Object) - locked &lt;0x00000000f0c5bfa0&gt; (a java.lang.Object) at com.tuning.AnalysisDeadLock$$Lambda$2/1418481495.run(Unknown Source) at java.lang.Thread.run(Thread.java:750) "thread-1" #8 prio=5 os_prio=0 tid=0x00007faa9c0f7000 nid=0x26eb waiting for monitor entry [0x00007faaa0f6c000] java.lang.Thread.State: BLOCKED (on object monitor) at com.tuning.AnalysisDeadLock.lambda$execute$0(AnalysisDeadLock.java:33) - waiting to lock &lt;0x00000000f0c5bfa0&gt; (a java.lang.Object) - locked &lt;0x00000000f0c5bf90&gt; (a java.lang.Object) at com.tuning.AnalysisDeadLock$$Lambda$1/471910020.run(Unknown Source) at java.lang.Thread.run(Thread.java:750) "Service Thread" #7 daemon prio=9 os_prio=0 tid=0x00007faa9c0b8800 nid=0x26e9 runnable [0x0000000000000000] java.lang.Thread.State: RUNNABLE "C1 CompilerThread1" #6 daemon prio=9 os_prio=0 tid=0x00007faa9c0b3800 nid=0x26e8 waiting on condition [0x0000000000000000] java.lang.Thread.State: RUNNABLE "C2 CompilerThread0" #5 daemon prio=9 os_prio=0 tid=0x00007faa9c0b1000 nid=0x26e7 waiting on condition [0x0000000000000000] java.lang.Thread.State: RUNNABLE "Signal Dispatcher" #4 daemon prio=9 os_prio=0 tid=0x00007faa9c0af800 nid=0x26e6 runnable [0x0000000000000000] java.lang.Thread.State: RUNNABLE "Finalizer" #3 daemon prio=8 os_prio=0 tid=0x00007faa9c07c800 nid=0x26e5 in Object.wait() [0x00007faaa1572000] java.lang.Thread.State: WAITING (on object monitor) at java.lang.Object.wait(Native Method) - waiting on &lt;0x00000000f0c08f08&gt; (a java.lang.ref.ReferenceQueue$Lock) at java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:150) - locked &lt;0x00000000f0c08f08&gt; (a java.lang.ref.ReferenceQueue$Lock) at java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:171) at java.lang.ref.Finalizer$FinalizerThread.run(Finalizer.java:188) "Reference Handler" #2 daemon prio=10 os_prio=0 tid=0x00007faa9c078000 nid=0x26e4 in Object.wait() [0x00007faaa1673000] java.lang.Thread.State: WAITING (on object monitor) at java.lang.Object.wait(Native Method) - waiting on &lt;0x00000000f0c06ba0&gt; (a java.lang.ref.Reference$Lock) at java.lang.Object.wait(Object.java:502) at java.lang.ref.Reference.tryHandlePending(Reference.java:191) - locked &lt;0x00000000f0c06ba0&gt; (a java.lang.ref.Reference$Lock) at java.lang.ref.Reference$ReferenceHandler.run(Reference.java:153) "VM Thread" os_prio=0 tid=0x00007faa9c06e000 nid=0x26e3 runnable "VM Periodic Task Thread" os_prio=0 tid=0x00007faa9c0bb800 nid=0x26ea waiting on condition JNI global references: 311 Found one Java-level deadlock: ============================= "thread-2": waiting to lock monitor 0x00007faa800062c8 (object 0x00000000f0c5bf90, a java.lang.Object), which is held by "thread-1" "thread-1": waiting to lock monitor 0x00007faa80004e28 (object 0x00000000f0c5bfa0, a java.lang.Object), which is held by "thread-2" Java stack information for the threads listed above: =================================================== "thread-2": at com.tuning.AnalysisDeadLock.lambda$execute$1(AnalysisDeadLock.java:49) - waiting to lock &lt;0x00000000f0c5bf90&gt; (a java.lang.Object) - locked &lt;0x00000000f0c5bfa0&gt; (a java.lang.Object) at com.tuning.AnalysisDeadLock$$Lambda$2/1418481495.run(Unknown Source) at java.lang.Thread.run(Thread.java:750) "thread-1": at com.tuning.AnalysisDeadLock.lambda$execute$0(AnalysisDeadLock.java:33) - waiting to lock &lt;0x00000000f0c5bfa0&gt; (a java.lang.Object) - locked &lt;0x00000000f0c5bf90&gt; (a java.lang.Object) at com.tuning.AnalysisDeadLock$$Lambda$1/471910020.run(Unknown Source) at java.lang.Thread.run(Thread.java:750) Found 1 deadlock. 3、jstat 3.1 查看gc的执行信息 #jstat -gc 10299 2000 10000 10299 进程号 2000 2秒钟执行一次 10000 执行10000次 S0C：第一个幸存区的大小，单位KB S1C：第二个幸存区的大小 S0U：第一个幸存区的使用大小S1U：第二个幸存区的使用大小 EC：伊甸园区的大小 EU：伊甸园区的使用大小 OC：老年代大小 OU：老年代使用大小 MC：方法区大小(元空间) MU：方法区使用大小 CCSC:压缩类空间大小 CCSU:压缩类空间使用大小 YGC：年轻代垃圾回收次数 YGCT：年轻代垃圾回收消耗时间，单位s FGC：老年代垃圾回收次数  FGCT：老年代垃圾回收消耗时间，单位s GCT：垃圾回收消耗总时间，单位s 3.2 堆内存统计 jstat -gccapacity 10299 NGCMN：新生代最小容量 NGCMX：新生代最大容量 NGC：当前新生代容量 S0C：第一个幸存区大小 S1C：第二个幸存区的大小 EC：伊甸园区的大小 OGCMN：老年代最小容量 OGCMX：老年代最大容量 OGC：当前老年代大小 OC:当前老年代大小 MCMN:最小元数据容量 MCMX：最大元数据容量 MC：当前元数据空间大小 CCSMN：最小压缩类空间大小 CCSMX：最大压缩类空间大小 CCSC：当前压缩类空间大小 YGC：年轻代gc次数 FGC：老年代GC次数 3.3 新生代垃圾回收统计 jstat -gcnew 10299 S0C：第一个幸存区的大小 S1C：第二个幸存区的大小 S0U：第一个幸存区的使用大小 S1U：第二个幸存区的使用大小 TT:对象在新生代存活的次数 MTT:对象在新生代存活的最大次数 DSS:期望的幸存区大小 EC：伊甸园区的大小 EU：伊甸园区的使用大小 YGC：年轻代垃圾回收次数 YGCT：年轻代垃圾回收消耗时间 3.4 新生代内存统计 jstat -gcnewcapacity 10299 NGCMN：新生代最小容量 NGCMX：新生代最大容量 NGC：当前新生代容量 S0CMX：最大幸存1区大小 S0C：当前幸存1区大小 S1CMX：最大幸存2区大小 S1C：当前幸存2区大小 ECMX：最大伊甸园区大小 EC：当前伊甸园区大小 YGC：年轻代垃圾回收次数 FGC：老年代回收次数 3.5 老年代垃圾回收统计 jstat -gcold 10299 MC：方法区大小 MU：方法区使用大小 CCSC:压缩类空间大小 CCSU:压缩类空间使用大小 OC：老年代大小 OU：老年代使用大小 YGC：年轻代垃圾回收次数 FGC：老年代垃圾回收次数 FGCT：老年代垃圾回收消耗时间 GCT：垃圾回收消耗总时间 3.6 老年代内存统计 jstat -gcoldcapacity 10299 OGCMN：老年代最小容量 OGCMX：老年代最大容量 OGC：当前老年代大小 OC：老年代大小 YGC：年轻代垃圾回收次数 FGC：老年代垃圾回收次数 FGCT：老年代垃圾回收消耗时间 GCT：垃圾回收消耗总时间 3.7 元数据空间统计 jstat -gcmetacapacity 10299 MCMN:最小元数据容量 MCMX：最大元数据容量 MC：当前元数据空间大小  CCSMN：最小压缩类空间大小 CCSMX：最大压缩类空间大小 CCSC：当前压缩类空间大小 YGC：年轻代垃圾回收次数 FGC：老年代垃圾回收次数 FGCT：老年代垃圾回收消耗时间 GCT：垃圾回收消耗总时间 3.8 gc公共数据统计 jstat -gcutil 10299 S0：幸存1区当前使用比例 S1：幸存2区当前使用比例 E：伊甸园区使用比例 O：老年代使用比例 M：元数据区使用比例 CCS：压缩使用比例 YGC：年轻代垃圾回收次数 FGC：老年代垃圾回收次数 FGCT：老年代垃圾回收消耗时间 GCT：垃圾回收消耗总时间]]></summary></entry><entry><title type="html">Welcome to Jekyll!</title><link href="http://0.0.0.0:5000/jekyll/update/2024/02/26/welcome-to-jekyll.html" rel="alternate" type="text/html" title="Welcome to Jekyll!" /><published>2024-02-26T15:07:33+08:00</published><updated>2024-02-26T15:07:33+08:00</updated><id>http://0.0.0.0:5000/jekyll/update/2024/02/26/welcome-to-jekyll</id><content type="html" xml:base="http://0.0.0.0:5000/jekyll/update/2024/02/26/welcome-to-jekyll.html"><![CDATA[<p>You’ll find this post in your <code class="language-plaintext highlighter-rouge">_posts</code> directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run <code class="language-plaintext highlighter-rouge">jekyll serve</code>, which launches a web server and auto-regenerates your site when a file is updated.</p>
+
+<p>Jekyll requires blog post files to be named according to the following format:</p>
+
+<p><code class="language-plaintext highlighter-rouge">YEAR-MONTH-DAY-title.MARKUP</code></p>
+
+<p>Where <code class="language-plaintext highlighter-rouge">YEAR</code> is a four-digit number, <code class="language-plaintext highlighter-rouge">MONTH</code> and <code class="language-plaintext highlighter-rouge">DAY</code> are both two-digit numbers, and <code class="language-plaintext highlighter-rouge">MARKUP</code> is the file extension representing the format used in the file. After that, include the necessary front matter. Take a look at the source for this post to get an idea about how it works.</p>
+
+<p>Jekyll also offers powerful support for code snippets:</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">def</span> <span class="nf">print_hi</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+  <span class="nb">puts</span> <span class="s2">"Hi, </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">"</span>
+<span class="k">end</span>
+<span class="n">print_hi</span><span class="p">(</span><span class="s1">'Tom'</span><span class="p">)</span>
+<span class="c1">#=&gt; prints 'Hi, Tom' to STDOUT.</span></code></pre></figure>
+
+<p>Check out the <a href="https://jekyllrb.com/docs/home">Jekyll docs</a> for more info on how to get the most out of Jekyll. File all bugs/feature requests at <a href="https://github.com/jekyll/jekyll">Jekyll’s GitHub repo</a>. If you have questions, you can ask them on <a href="https://talk.jekyllrb.com/">Jekyll Talk</a>.</p>]]></content><author><name></name></author><category term="jekyll" /><category term="update" /><summary type="html"><![CDATA[You’ll find this post in your _posts directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run jekyll serve, which launches a web server and auto-regenerates your site when a file is updated.]]></summary></entry></feed>
