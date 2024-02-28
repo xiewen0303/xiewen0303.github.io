@@ -1,0 +1,1 @@
+const t=JSON.parse('{"key":"v-2444ea21","path":"/blogs/huancun/huancun.html","title":"缓存","lang":"en-US","frontmatter":{},"headers":[],"git":{},"filePathRelative":"blogs/缓存/缓存.md"}');export{t as data};
