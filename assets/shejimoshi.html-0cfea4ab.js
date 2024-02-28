@@ -1,1 +1,0 @@
-const t=JSON.parse('{"key":"v-7cfa7ac1","path":"/blogs/shejimoshi/shejimoshi.html","title":"设计模式","lang":"en-US","frontmatter":{"title":"设计模式","date":"2022/12/15","tags":["设计模式"],"categories":["设计模式"]},"headers":[],"git":{},"filePathRelative":"blogs/设计模式/设计模式.md"}');export{t as data};
